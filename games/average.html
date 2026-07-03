@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平均チャレンジ | Math Quest</title>
+  <link rel="stylesheet" href="../css/game-nav.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #eeedf3;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.3s ease;
+    }
+
+    .game {
+      width: min(300px, 100vw - 2.5rem);
+      display: flex; flex-direction: column; align-items: center; gap: 1.5rem;
+    }
+
+    .header { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 0.6rem; letter-spacing: 0.22em; color: #b3b0c4; font-weight: 500; }
+    .score { font-size: 0.75rem; color: #b3b0c4; }
+    .score b { color: #2d2b3d; font-size: 1rem; font-weight: 600; }
+
+    /* ── card ── */
+    .expr-card {
+      width: 100%; background: white; border-radius: 24px;
+      padding: 1.8rem 1.4rem 1.6rem;
+      box-shadow: 0 2px 4px rgba(60,58,90,0.06), 0 12px 40px rgba(60,58,90,0.12);
+      display: flex; flex-direction: column; align-items: center; gap: 1rem;
+      transition: background 0.28s ease, opacity 0.16s ease;
+    }
+    .expr-card.ok  { background: #d1fae5; }
+    .expr-card.err { background: #fee2e2; }
+
+    .card-label {
+      font-size: 0.68rem; color: #b3b0c4; letter-spacing: 0.1em;
+    }
+
+    /* 5 data cells */
+    .five-data {
+      display: flex; gap: 0.35rem; width: 100%;
+    }
+    .five-data span {
+      flex: 1; background: #f5f3ff; border-radius: 10px;
+      padding: 0.7rem 0.1rem; text-align: center;
+      font-size: 1.05rem; font-weight: 300; color: #1c1b28;
+      font-variant-numeric: tabular-nums;
+      transition: background 0.28s, color 0.28s;
+    }
+    .expr-card.ok  .five-data span { background: #dcfce7; color: #059669; }
+    .expr-card.err .five-data span { background: #fee2e2; color: #dc2626; }
+
+    .q-text {
+      font-size: 0.82rem; color: #64748b; letter-spacing: 0.02em;
+    }
+
+    /* ── feedback ── */
+    .fb {
+      font-size: 0.74rem; min-height: 1.1rem;
+      color: transparent; transition: color 0.2s; text-align: center; line-height: 1.4;
+    }
+    .fb.ok  { color: #059669; }
+    .fb.err { color: #dc2626; }
+
+    /* ── choices ── */
+    .choices {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem; width: 100%;
+    }
+    .choice {
+      padding: 1.05rem 0;
+      background: #ede9fe; color: #4c1d95;
+      border: none; border-radius: 14px;
+      font-size: 1rem; font-weight: 700;
+      font-family: inherit; font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, transform 0.1s;
+    }
+    .choice:active { transform: scale(0.95); }
+    .choice:disabled { cursor: default; }
+    .choice.hit  { background: #22c55e; color: white; }
+    .choice.miss { background: #ef4444; color: white; }
+
+    /* ── hint ── */
+    .hint-wrap { width: 100%; }
+    .hint-btn {
+      display: flex; align-items: center; gap: 0.25rem;
+      margin: 0 auto; background: none; border: none;
+      font-family: inherit; font-size: 0.67rem; color: #c0bdce;
+      cursor: pointer; padding: 0.2rem 0.4rem;
+      border-radius: 6px; transition: color 0.15s; letter-spacing: 0.04em;
+    }
+    .hint-btn:hover { color: #7c78a0; }
+    .chev { display: inline-block; transition: transform 0.22s; font-size: 0.55rem; }
+    .chev.open { transform: rotate(90deg); }
+    .hint-body {
+      display: none; flex-direction: column; gap: 0.6rem;
+      margin-top: 0.65rem; padding: 0.9rem 1rem;
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 14px rgba(60,58,90,0.08);
+    }
+    .hint-body.open { display: flex; }
+    .hs-sec { padding: 0.2rem 0; }
+    .hs-sec + .hs-sec { border-top: 1px solid #f0eef8; padding-top: 0.55rem; margin-top: 0.1rem; }
+    .hs-head { font-size: 0.76rem; font-weight: 700; color: #6d28d9; margin-bottom: 0.35rem; }
+    .hs-body { font-size: 0.71rem; color: #64748b; line-height: 1.7; margin-bottom: 0.3rem; }
+    .hs-body:last-child { margin-bottom: 0; }
+    .hs-box {
+      background: #f5f3ff; border-radius: 8px;
+      padding: 0.5rem 0.65rem; margin: 0.3rem 0;
+      font-size: 0.72rem; color: #1c1b28; line-height: 1.85;
+    }
+    .hs-box b { color: #6d28d9; }
+
+    /* ══ STREAK SYSTEM ══ */
+    .toast {
+      position: fixed; top: 1.2rem; left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      padding: 0.5rem 1.4rem; border-radius: 50px;
+      font-size: 0.92rem; font-weight: 700; color: white;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.22); opacity: 0;
+      transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
+      z-index: 300; pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      18% { transform: translateX(-9px); } 36% { transform: translateX(9px); }
+      54% { transform: translateX(-6px); } 72% { transform: translateX(6px); }
+    }
+    .shaking { animation: shake 0.45s ease; }
+
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      80%  { opacity: 0.85; }
+      100% { transform: translateY(110vh) rotate(750deg); opacity: 0; }
+    }
+
+    .clear-overlay {
+      position: fixed; inset: 0; background: rgba(28,27,40,0.84);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .clear-overlay.show { opacity: 1; pointer-events: all; }
+    .clear-card {
+      background: white; border-radius: 28px; padding: 2.6rem 2rem 2rem;
+      text-align: center; width: min(278px, 90vw);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.35);
+      transform: scale(0.82);
+      transition: transform 0.42s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .clear-overlay.show .clear-card { transform: scale(1); }
+    .clear-emoji  { font-size: 3rem; line-height: 1; margin-bottom: 0.3rem; }
+    .clear-title  { font-size: 2.4rem; font-weight: 800; color: #1c1b28; letter-spacing: -0.04em; margin-bottom: 0.25rem; }
+    .clear-streak { font-size: 0.8rem; font-weight: 700; color: #6d28d9; letter-spacing: 0.06em; margin-bottom: 1.3rem; }
+    .clear-divider { width: 36px; height: 2px; background: #eeedf3; margin: 0 auto 1.2rem; }
+    .clear-stat { font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.2rem; }
+    .clear-stat b { color: #1c1b28; font-size: 1rem; }
+    .clear-actions { margin-top: 1.7rem; }
+    .clear-retry {
+      background: #1c1b28; color: white; border: none; border-radius: 14px;
+      padding: 0.9rem 2.5rem; font-size: 0.9rem; font-family: inherit;
+      font-weight: 600; cursor: pointer; transition: background 0.15s;
+    }
+    .clear-retry:hover { background: #2d2b3d; }
+  </style>
+</head>
+<body>
+
+<a class="site-back" href="../index.html#games" aria-label="ゲーム一覧へ戻る">‹ ゲーム一覧へ</a>
+
+<div class="toast" id="toast"></div>
+
+<div class="game" id="gameEl">
+  <div class="header">
+    <div class="title">平均チャレンジ</div>
+    <div class="score"><b id="sc">0</b> / <span id="tot">0</span></div>
+  </div>
+
+  <div class="expr-card" id="exprCard">
+    <div class="card-label">5 人のデータ（分）</div>
+    <div class="five-data">
+      <span id="d0">&mdash;</span>
+      <span id="d1">&mdash;</span>
+      <span id="d2">&mdash;</span>
+      <span id="d3">&mdash;</span>
+      <span id="d4">&mdash;</span>
+    </div>
+    <div class="q-text">の平均は？</div>
+  </div>
+
+  <div class="fb" id="fb"></div>
+
+  <div class="choices">
+    <button class="choice" id="c0" onclick="answer(0)">&mdash;</button>
+    <button class="choice" id="c1" onclick="answer(1)">&mdash;</button>
+    <button class="choice" id="c2" onclick="answer(2)">&mdash;</button>
+  </div>
+
+  <div class="hint-wrap">
+    <button class="hint-btn" onclick="toggleHint()">
+      <span class="chev" id="chev">&#9658;</span> 平均の求め方
+    </button>
+    <div class="hint-body" id="hb">
+
+      <div class="hs-sec">
+        <div class="hs-head">① 計算の手順</div>
+        <p class="hs-body">平均 = 合計 &#247; 個数（5）</p>
+        <div class="hs-box">
+          例: 1, 3, 5, 7, 9<br>
+          合計 = 1+3+5+7+9 = <b>25</b><br>
+          平均 = 25 &#247; 5 = <b>5</b>
+        </div>
+      </div>
+
+      <div class="hs-sec">
+        <div class="hs-head">② 負の数が混ざる場合</div>
+        <p class="hs-body">負の数も同じように足す。合計がゼロになることもある。</p>
+        <div class="hs-box">
+          例: &#8722;2, 0, 4, 6, 2<br>
+          合計 = &#8722;2+0+4+6+2 = <b>10</b><br>
+          平均 = 10 &#247; 5 = <b>2</b>
+        </div>
+        <div class="hs-box">
+          例: &#8722;4, &#8722;2, 0, 2, 4<br>
+          合計 = 0 &#8594; 平均 = 0 &#247; 5 = <b>0</b>
+        </div>
+      </div>
+
+      <div class="hs-sec">
+        <div class="hs-head">③ 割り切れない場合</div>
+        <p class="hs-body">答えが小数になることもある。</p>
+        <div class="hs-box">
+          例: 10, 13, 16, 12, 11<br>
+          合計 = 62<br>
+          平均 = 62 &#247; 5 = <b>12.4</b>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="clear-overlay" id="clearOverlay">
+  <div class="clear-card">
+    <div class="clear-emoji">&#127882;</div>
+    <div class="clear-title">クリア！</div>
+    <div class="clear-streak">10 問連続正解！！</div>
+    <div class="clear-divider"></div>
+    <p class="clear-stat">正解率 <b id="clearRate">&#8212;</b></p>
+    <p class="clear-stat"><b id="clearFrac">&#8212;</b> 問正解</p>
+    <div class="clear-actions">
+      <button class="clear-retry" onclick="resetGame()">もう一度</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // nums: 5つの数値（配列）　val: 正解　opts: 3択（数値）
+  var questions = [
+    { nums:[1,3,5,7,9],       val:5,    opts:[5,4,25],    calc:'合計25&#247;5=5' },
+    { nums:[-2,0,4,6,2],      val:2,    opts:[2,1,10],    calc:'合計10&#247;5=2' },
+    { nums:[-5,-1,3,7,1],     val:1,    opts:[1,0,5],     calc:'合計5&#247;5=1' },
+    { nums:[-4,-2,0,2,4],     val:0,    opts:[0,1,-4],    calc:'合計0&#247;5=0' },
+    { nums:[-3,0,3,6,9],      val:3,    opts:[3,2,15],    calc:'合計15&#247;5=3' },
+    { nums:[2,4,6,8,10],      val:6,    opts:[6,5,30],    calc:'合計30&#247;5=6' },
+    { nums:[-6,-2,2,4,7],     val:1,    opts:[1,0,5],     calc:'合計5&#247;5=1' },
+    { nums:[-8,-4,2,4,6],     val:0,    opts:[0,1,-8],    calc:'合計0&#247;5=0' },
+    { nums:[-3,-1,1,3,5],     val:1,    opts:[1,2,5],     calc:'合計5&#247;5=1' },
+    { nums:[5,7,9,11,13],     val:9,    opts:[9,8,45],    calc:'合計45&#247;5=9' },
+    { nums:[-5,-3,1,3,4],     val:0,    opts:[0,-1,-5],   calc:'合計0&#247;5=0' },
+    { nums:[-4,0,2,4,8],      val:2,    opts:[2,1,10],    calc:'合計10&#247;5=2' },
+    { nums:[10,13,16,12,11],  val:12.4, opts:[12.4,13,62],calc:'合計62&#247;5=12.4' },
+    { nums:[-3,-2,0,2,3],     val:0,    opts:[0,1,-3],    calc:'合計0&#247;5=0' },
+    { nums:[-1,2,3,5,6],      val:3,    opts:[3,2,15],    calc:'合計15&#247;5=3' },
+    { nums:[4,6,8,10,2],      val:6,    opts:[6,5,30],    calc:'合計30&#247;5=6' },
+  ];
+
+  var CONFETTI_COLORS = ['#7c3aed','#0891b2','#22c55e','#f97316','#ec4899','#eab308','#3b82f6'];
+  var MILESTONES = {
+    3: { msg:'&#128293; 3連続！',       bg:'#d97706', flash:'#fffbeb', confetti:0,  shake:false },
+    5: { msg:'&#11088; 5連続！！',      bg:'#f97316', flash:'#fff7ed', confetti:15, shake:false },
+    8: { msg:'&#128640; 8連続！！！',   bg:'#7c3aed', flash:'#f5f3ff', confetti:25, shake:true  },
+    9: { msg:'&#127775; 9連続！！！！', bg:'#059669', flash:'#ecfdf5', confetti:35, shake:true  },
+  };
+
+  var pool = [], pidx = 0, cur = null, curOpts = [];
+  var okCount = 0, totCount = 0, streak = 0, locked = false;
+
+  function $(id) { return document.getElementById(id); }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function setFb(html, cls) {
+    var el = $('fb');
+    el.innerHTML = html;
+    el.className = 'fb' + (cls ? ' ' + cls : '');
+  }
+
+  /* ── streak ── */
+  var toastTimer;
+  function showToast(msg, bg) {
+    var t = $('toast');
+    clearTimeout(toastTimer);
+    t.innerHTML = msg; t.style.background = bg;
+    t.classList.remove('show'); void t.offsetWidth;
+    t.classList.add('show');
+    toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2300);
+  }
+  function flashBg(color) {
+    document.body.style.background = color;
+    setTimeout(function() { document.body.style.background = '#eeedf3'; }, 330);
+  }
+  function spawnConfetti(count) {
+    for (var i = 0; i < count; i++) {
+      (function() {
+        var el = document.createElement('div');
+        var sz = 6 + Math.random() * 9;
+        el.style.cssText = 'position:fixed;z-index:600;' +
+          'left:' + (4 + Math.random() * 92) + 'vw;' +
+          'top:-' + (8 + Math.random() * 14) + 'px;' +
+          'width:' + sz + 'px;height:' + sz + 'px;' +
+          'background:' + CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)] + ';' +
+          'border-radius:' + (Math.random() > 0.5 ? '50%' : '3px') + ';' +
+          'animation:confettiFall ' + (1.4 + Math.random() * 1.6) + 's ease-in forwards;' +
+          'animation-delay:' + (Math.random() * 0.7) + 's;pointer-events:none;';
+        document.body.appendChild(el);
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3800);
+      })();
+    }
+  }
+  function shakeGame() {
+    var el = $('gameEl');
+    el.classList.remove('shaking'); void el.offsetWidth;
+    el.classList.add('shaking');
+    setTimeout(function() { el.classList.remove('shaking'); }, 500);
+  }
+  function checkStreak() {
+    if (streak === 10) {
+      flashBg('#f0fdf4');
+      setTimeout(function() { spawnConfetti(45); showClear(); }, 1300);
+      return true;
+    }
+    var m = MILESTONES[streak];
+    if (m) {
+      showToast(m.msg, m.bg); flashBg(m.flash);
+      if (m.confetti > 0) spawnConfetti(m.confetti);
+      if (m.shake) shakeGame();
+    }
+    return false;
+  }
+  function showClear() {
+    var rate = totCount > 0 ? Math.round(okCount / totCount * 100) : 0;
+    $('clearRate').textContent = rate + '%';
+    $('clearFrac').textContent = okCount + ' / ' + totCount;
+    $('clearOverlay').classList.add('show');
+  }
+  function resetGame() {
+    streak = 0; okCount = 0; totCount = 0;
+    $('sc').textContent = '0'; $('tot').textContent = '0';
+    $('clearOverlay').classList.remove('show');
+    for (var i = 0; i < 3; i++) $('c' + i).className = 'choice';
+    $('exprCard').className = 'expr-card';
+    $('exprCard').style.opacity = '1';
+    locked = false; loadQ(); setFb('', '');
+  }
+
+  /* ── core ── */
+  function loadQ() {
+    if (pidx >= pool.length) { pool = shuffle(pool.slice()); pidx = 0; }
+    cur = pool[pidx++];
+    curOpts = shuffle(cur.opts.slice());
+
+    // 5つのデータをセル表示
+    for (var i = 0; i < 5; i++) {
+      $('d' + i).textContent = cur.nums[i];
+    }
+
+    // 選択肢
+    for (var i = 0; i < 3; i++) {
+      $('c' + i).innerHTML = '' + curOpts[i];
+      $('c' + i).className = 'choice';
+      $('c' + i).disabled = false;
+    }
+  }
+
+  function next() {
+    $('exprCard').style.opacity = '0';
+    setTimeout(function() {
+      $('exprCard').className = 'expr-card';
+      $('exprCard').style.opacity = '1';
+      loadQ(); setFb('', ''); locked = false;
+    }, 175);
+  }
+
+  function answer(idx) {
+    if (locked) return;
+    locked = true;
+    for (var i = 0; i < 3; i++) $('c' + i).disabled = true;
+
+    var chosen = curOpts[idx];
+    var right = (chosen === cur.val);
+    var correctIdx = curOpts.indexOf(cur.val);
+    totCount++;
+
+    if (right) {
+      okCount++; streak++;
+      $('c' + idx).classList.add('hit');
+      $('exprCard').classList.add('ok');
+      setFb('正解 &#10003;', 'ok');
+      if (!checkStreak()) setTimeout(next, 1700);
+    } else {
+      streak = 0;
+      $('c' + idx).classList.add('miss');
+      $('c' + correctIdx).classList.add('hit');
+      $('exprCard').classList.add('err');
+      setFb('正解は ' + cur.val + '（' + cur.calc + '）', 'err');
+      setTimeout(next, 1900);
+    }
+    $('sc').textContent = okCount;
+    $('tot').textContent = totCount;
+  }
+
+  function toggleHint() {
+    $('hb').classList.toggle('open');
+    $('chev').classList.toggle('open');
+  }
+
+  for (var i = 0; i < questions.length; i++) pool.push(questions[i]);
+  pool = shuffle(pool);
+  loadQ();
+</script>
+</body>
+</html>

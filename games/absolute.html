@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>絶対値チャレンジ | Math Quest</title>
+  <link rel="stylesheet" href="../css/game-nav.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #eeedf3;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+
+    .game {
+      width: min(300px, 100vw - 2.5rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    /* ── header ── */
+    .header { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 0.6rem; letter-spacing: 0.22em; color: #b3b0c4; font-weight: 500; }
+    .score { font-size: 0.75rem; color: #b3b0c4; }
+    .score b { color: #2d2b3d; font-size: 1rem; font-weight: 600; }
+
+    /* ── question ── */
+    .question {
+      font-size: 1rem; color: #1c1b28; text-align: center;
+      letter-spacing: 0.01em; transition: opacity 0.16s ease;
+    }
+    .q-key { color: #6d28d9; font-weight: 700; }
+
+    /* ── pair ── */
+    .pair {
+      display: flex; align-items: center; width: 100%;
+      transition: opacity 0.16s ease;
+    }
+
+    .num-card {
+      flex: 1; position: relative; overflow: hidden;
+      padding: 2.1rem 0.4rem;
+      background: white; border-radius: 20px; text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(60,58,90,0.06), 0 8px 28px rgba(60,58,90,0.11);
+      transition: background 0.22s, transform 0.1s, box-shadow 0.22s;
+      user-select: none;
+    }
+    .num-card:active { transform: scale(0.95); }
+    .num-card::after {
+      content: ''; position: absolute;
+      bottom: 0; left: 0; right: 0; height: 3px;
+      border-radius: 0 0 20px 20px;
+      transition: opacity 0.22s;
+    }
+    #cardA::after { background: #7c3aed; }
+    #cardB::after { background: #0891b2; }
+
+    .num-val {
+      font-weight: 200; color: #1c1b28;
+      letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+      line-height: 1; transition: color 0.22s;
+    }
+    .num-card.hit {
+      background: #22c55e;
+      box-shadow: 0 4px 20px rgba(34,197,94,0.32);
+    }
+    .num-card.hit::after, .num-card.miss::after { opacity: 0; }
+    .num-card.hit .num-val { color: white; }
+    .num-card.miss {
+      background: #ef4444;
+      box-shadow: 0 4px 20px rgba(239,68,68,0.28);
+    }
+    .num-card.miss .num-val { color: white; }
+
+    .sep {
+      font-size: 0.58rem; color: #c0bdce;
+      letter-spacing: 0.1em; width: 2rem;
+      text-align: center; flex-shrink: 0;
+    }
+
+    /* ── feedback ── */
+    .fb {
+      font-size: 0.74rem; min-height: 1.1rem;
+      color: transparent; transition: color 0.2s; text-align: center;
+    }
+    .fb.ok  { color: #059669; }
+    .fb.err { color: #dc2626; }
+
+    /* ── hint ── */
+    .hint-wrap { width: 100%; }
+    .hint-btn {
+      display: flex; align-items: center; gap: 0.25rem;
+      margin: 0 auto; background: none; border: none;
+      font-family: inherit; font-size: 0.67rem; color: #c0bdce;
+      cursor: pointer; padding: 0.2rem 0.4rem;
+      border-radius: 6px; transition: color 0.15s; letter-spacing: 0.04em;
+    }
+    .hint-btn:hover { color: #7c78a0; }
+    .chev { display: inline-block; transition: transform 0.22s; font-size: 0.55rem; }
+    .chev.open { transform: rotate(90deg); }
+    .hint-body {
+      display: none; flex-direction: column; gap: 0.7rem;
+      margin-top: 0.65rem; padding: 1rem 0.85rem;
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 14px rgba(60,58,90,0.08);
+    }
+    .hint-body.open { display: flex; }
+    .nl-legend { display: flex; justify-content: center; gap: 1.4rem; }
+    .nl-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.68rem; color: #555; }
+    .nl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .hint-note { font-size: 0.7rem; color: #64748b; text-align: center; line-height: 1.5; }
+    .hint-note b { color: #1c1b28; }
+
+    /* ══ STREAK SYSTEM ══ */
+
+    /* Toast — slides down from top */
+    .toast {
+      position: fixed; top: 1.2rem; left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      padding: 0.5rem 1.4rem;
+      border-radius: 50px;
+      font-size: 0.92rem; font-weight: 700; color: white;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+      opacity: 0;
+      transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
+      z-index: 300; pointer-events: none; white-space: nowrap;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Shake */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      18%  { transform: translateX(-9px); }
+      36%  { transform: translateX(9px); }
+      54%  { transform: translateX(-6px); }
+      72%  { transform: translateX(6px); }
+    }
+    .shaking { animation: shake 0.45s ease; }
+
+    /* Confetti */
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      80%  { opacity: 0.85; }
+      100% { transform: translateY(110vh) rotate(750deg); opacity: 0; }
+    }
+
+    /* Clear overlay */
+    .clear-overlay {
+      position: fixed; inset: 0;
+      background: rgba(28,27,40,0.84);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .clear-overlay.show { opacity: 1; pointer-events: all; }
+
+    .clear-card {
+      background: white; border-radius: 28px;
+      padding: 2.6rem 2rem 2rem;
+      text-align: center; width: min(278px, 90vw);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.35);
+      transform: scale(0.82);
+      transition: transform 0.42s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .clear-overlay.show .clear-card { transform: scale(1); }
+
+    .clear-emoji  { font-size: 3rem; line-height: 1; margin-bottom: 0.3rem; }
+    .clear-title  {
+      font-size: 2.4rem; font-weight: 800; color: #1c1b28;
+      letter-spacing: -0.04em; margin-bottom: 0.25rem;
+    }
+    .clear-streak {
+      font-size: 0.8rem; font-weight: 700;
+      color: #6d28d9; letter-spacing: 0.06em; margin-bottom: 1.3rem;
+    }
+    .clear-divider {
+      width: 36px; height: 2px; background: #eeedf3;
+      margin: 0 auto 1.2rem;
+    }
+    .clear-stat { font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.2rem; }
+    .clear-stat b { color: #1c1b28; font-size: 1rem; }
+    .clear-actions { margin-top: 1.7rem; }
+    .clear-retry {
+      background: #1c1b28; color: white;
+      border: none; border-radius: 14px;
+      padding: 0.9rem 2.5rem;
+      font-size: 0.9rem; font-family: inherit; font-weight: 600;
+      cursor: pointer; transition: background 0.15s; letter-spacing: 0.02em;
+    }
+    .clear-retry:hover { background: #2d2b3d; }
+  </style>
+</head>
+<body>
+
+<a class="site-back" href="../index.html#games" aria-label="ゲーム一覧へ戻る">‹ ゲーム一覧へ</a>
+
+<div class="toast" id="toast"></div>
+
+<div class="game" id="gameEl">
+  <div class="header">
+    <div class="title">絶対値チャレンジ</div>
+    <div class="score"><b id="sc">0</b> / <span id="tot">0</span></div>
+  </div>
+
+  <div class="question" id="question">
+    絶対値が <span class="q-key" id="qKey">大きい</span> のは？
+  </div>
+
+  <div class="pair" id="pair">
+    <div class="num-card" id="cardA" onclick="answer('a')">
+      <div class="num-val" id="numA">—</div>
+    </div>
+    <div class="sep">vs</div>
+    <div class="num-card" id="cardB" onclick="answer('b')">
+      <div class="num-val" id="numB">—</div>
+    </div>
+  </div>
+
+  <div class="fb" id="fb"></div>
+
+  <div class="hint-wrap">
+    <button class="hint-btn" onclick="toggleHint()">
+      <span class="chev" id="chev">▶</span> 数直線で確認
+    </button>
+    <div class="hint-body" id="hb">
+      <svg id="nlSvg" viewBox="0 0 268 68" width="100%"
+           style="overflow:visible; display:block;"></svg>
+      <div class="nl-legend">
+        <div class="nl-item">
+          <div class="nl-dot" style="background:#7c3aed"></div><span>左のカード</span>
+        </div>
+        <div class="nl-item">
+          <div class="nl-dot" style="background:#0891b2"></div><span>右のカード</span>
+        </div>
+      </div>
+      <p class="hint-note">0 から遠いほど <b>絶対値が大きい</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- Clear screen -->
+<div class="clear-overlay" id="clearOverlay">
+  <div class="clear-card">
+    <div class="clear-emoji">🎊</div>
+    <div class="clear-title">クリア！</div>
+    <div class="clear-streak">10 問連続正解！！</div>
+    <div class="clear-divider"></div>
+    <p class="clear-stat">正解率 <b id="clearRate">—</b></p>
+    <p class="clear-stat"><b id="clearFrac">—</b> 問正解</p>
+    <div class="clear-actions">
+      <button class="clear-retry" onclick="resetGame()">もう一度</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── constants ── */
+  const COL_A = '#7c3aed', COL_B = '#0891b2';
+  const CONFETTI_COLORS = ['#7c3aed','#0891b2','#22c55e','#f97316','#ec4899','#eab308','#3b82f6'];
+  const MILESTONES = {
+    3: { msg: '🔥 3連続！',      bg: '#d97706', flash: '#fffbeb', confetti: 0,  shake: false },
+    5: { msg: '⭐ 5連続！！',    bg: '#f97316', flash: '#fff7ed', confetti: 15, shake: false },
+    8: { msg: '🚀 8連続！！！',  bg: '#7c3aed', flash: '#f5f3ff', confetti: 25, shake: true  },
+    9: { msg: '🌟 9連続！！！！', bg: '#059669', flash: '#ecfdf5', confetti: 35, shake: true  },
+  };
+
+  /* ── question data ── */
+  const pairs = [
+    {a:-5,  b: 3  }, {a:-8,  b: 2  }, {a:-1,  b: 7  }, {a: 0,  b:-3  },
+    {a:-3,  b:-7  }, {a: 4,  b: 6  }, {a:-4,  b: 1  }, {a: 9,  b:-6  },
+    {a:-0.5,b: 1.5}, {a:-3,  b: 1.5}, {a: 0,  b: 5  }, {a:-2,  b:-5  },
+    {a: 7,  b:-4  }, {a:-1,  b: 0  }, {a: 6,  b:-9  }, {a:-2.5,b: 2  },
+    {a:-6,  b: 4  }, {a: 8,  b:-3  }, {a:-7,  b: 5  },
+  ];
+
+  let pool = [...pairs].sort(() => Math.random() - 0.5);
+  let pidx = 0, cur = null, askBigger = true;
+  let okCount = 0, totCount = 0, streak = 0, locked = false;
+
+  const $ = id => document.getElementById(id);
+  const fmt = n => n.toString();
+
+  /* ── sizing ── */
+  function setSize(el, n) {
+    const len = fmt(n).length;
+    el.style.fontSize = len <= 2 ? '3.5rem' : len <= 3 ? '2.8rem' : '2.2rem';
+  }
+
+  function setFb(text, cls) {
+    const el = $('fb');
+    el.textContent = text;
+    el.className = 'fb' + (cls ? ' ' + cls : '');
+  }
+
+  /* ── number line ── */
+  function drawNumLine(a, b) {
+    const W = 268, CX = W / 2, dotY = 36;
+    const maxAbs = Math.max(Math.abs(a), Math.abs(b), 0.5);
+    const scale  = (CX - 20) / maxAbs;
+    const clamp  = x => Math.max(8, Math.min(W - 8, x));
+    const xa = clamp(CX + a * scale), xb = clamp(CX + b * scale);
+    const absA = Math.abs(a), absB = Math.abs(b);
+    const lyA = dotY - 14, lyB = Math.abs(xa - xb) < 26 ? dotY - 27 : dotY - 14;
+    let s = '';
+    s += `<line x1="6" y1="${dotY}" x2="${W-6}" y2="${dotY}" stroke="#ddd9ec" stroke-width="2" stroke-linecap="round"/>`;
+    s += `<line x1="${CX}" y1="${dotY-6}" x2="${CX}" y2="${dotY+6}" stroke="#b3b0c4" stroke-width="1.5"/>`;
+    s += `<text x="${CX}" y="${dotY+19}" text-anchor="middle" font-size="10" fill="#b3b0c4" font-family="sans-serif">0</text>`;
+    const lineOrder = absA >= absB ? [[xa,COL_A],[xb,COL_B]] : [[xb,COL_B],[xa,COL_A]];
+    lineOrder.forEach(([x,c]) =>
+      s += `<line x1="${CX}" y1="${dotY}" x2="${x}" y2="${dotY}" stroke="${c}" stroke-width="3" stroke-linecap="round" opacity="0.4"/>`
+    );
+    s += `<circle cx="${xa}" cy="${dotY}" r="5.5" fill="${COL_A}"/>`;
+    s += `<circle cx="${xb}" cy="${dotY}" r="5.5" fill="${COL_B}"/>`;
+    s += `<text x="${xa}" y="${lyA}" text-anchor="middle" font-size="12" font-weight="bold" fill="${COL_A}" font-family="sans-serif">${fmt(a)}</text>`;
+    s += `<text x="${xb}" y="${lyB}" text-anchor="middle" font-size="12" font-weight="bold" fill="${COL_B}" font-family="sans-serif">${fmt(b)}</text>`;
+    $('nlSvg').innerHTML = s;
+  }
+
+  /* ── streak effects ── */
+
+  let toastTimer;
+  function showToast(msg, bg) {
+    const t = $('toast');
+    clearTimeout(toastTimer);
+    t.textContent = msg;
+    t.style.background = bg;
+    t.classList.remove('show');
+    void t.offsetWidth; // restart transition
+    t.classList.add('show');
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2300);
+  }
+
+  function flashBg(color) {
+    document.body.style.background = color;
+    setTimeout(() => { document.body.style.background = '#eeedf3'; }, 330);
+  }
+
+  function spawnConfetti(count) {
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      const sz = 6 + Math.random() * 9;
+      el.style.cssText = `
+        position:fixed; z-index:600;
+        left:${4 + Math.random() * 92}vw;
+        top:-${8 + Math.random() * 14}px;
+        width:${sz}px; height:${sz}px;
+        background:${CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]};
+        border-radius:${Math.random() > 0.5 ? '50%' : '3px'};
+        animation: confettiFall ${1.4 + Math.random() * 1.6}s ease-in forwards;
+        animation-delay:${Math.random() * 0.7}s;
+        pointer-events:none;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3800);
+    }
+  }
+
+  function shakeGame() {
+    const el = $('gameEl');
+    el.classList.remove('shaking');
+    void el.offsetWidth;
+    el.classList.add('shaking');
+    setTimeout(() => el.classList.remove('shaking'), 500);
+  }
+
+  /* ── milestone check — returns true if clear triggered ── */
+  function checkStreak() {
+    if (streak === 10) {
+      flashBg('#f0fdf4');
+      setTimeout(() => { spawnConfetti(45); showClear(); }, 1300);
+      return true;
+    }
+    const m = MILESTONES[streak];
+    if (m) {
+      showToast(m.msg, m.bg);
+      flashBg(m.flash);
+      if (m.confetti > 0) spawnConfetti(m.confetti);
+      if (m.shake) shakeGame();
+    }
+    return false;
+  }
+
+  function showClear() {
+    const rate = totCount > 0 ? Math.round(okCount / totCount * 100) : 0;
+    $('clearRate').textContent = `${rate}%`;
+    $('clearFrac').textContent = `${okCount} / ${totCount}`;
+    $('clearOverlay').classList.add('show');
+  }
+
+  function resetGame() {
+    streak = 0; okCount = 0; totCount = 0;
+    $('sc').textContent = '0';
+    $('tot').textContent = '0';
+    $('clearOverlay').classList.remove('show');
+    $('cardA').className = 'num-card';
+    $('cardB').className = 'num-card';
+    $('pair').style.opacity = '1';
+    $('question').style.opacity = '1';
+    locked = false;
+    loadQ();
+    setFb('', '');
+  }
+
+  /* ── core game ── */
+  function loadQ() {
+    if (pidx >= pool.length) {
+      pool = [...pairs].sort(() => Math.random() - 0.5);
+      pidx = 0;
+    }
+    cur = pool[pidx++];
+    askBigger = Math.random() < 0.5;
+    $('qKey').textContent = askBigger ? '大きい' : '小さい';
+    $('numA').textContent = fmt(cur.a);
+    $('numB').textContent = fmt(cur.b);
+    setSize($('numA'), cur.a);
+    setSize($('numB'), cur.b);
+    drawNumLine(cur.a, cur.b);
+  }
+
+  function next() {
+    $('pair').style.opacity = '0';
+    $('question').style.opacity = '0';
+    setTimeout(() => {
+      $('cardA').className = 'num-card';
+      $('cardB').className = 'num-card';
+      loadQ();
+      setFb('', '');
+      $('pair').style.opacity = '1';
+      $('question').style.opacity = '1';
+      locked = false;
+    }, 175);
+  }
+
+  function answer(side) {
+    if (locked) return;
+    locked = true;
+
+    const absA = Math.abs(cur.a), absB = Math.abs(cur.b);
+    const correct = askBigger ? (absA > absB ? 'a' : 'b') : (absA < absB ? 'a' : 'b');
+    const right = (side === correct);
+    totCount++;
+
+    const clicked = $(side === 'a' ? 'cardA' : 'cardB');
+    const other   = $(side === 'a' ? 'cardB' : 'cardA');
+
+    const fbText = `${fmt(cur.a)} の絶対値: ${absA}　${fmt(cur.b)} の絶対値: ${absB}`;
+
+    if (right) {
+      okCount++; streak++;
+      clicked.classList.add('hit');
+      setFb(fbText, 'ok');
+      if (!checkStreak()) setTimeout(next, 1700);
+      // if checkStreak() returns true, clear is pending — don't call next()
+    } else {
+      streak = 0;
+      clicked.classList.add('miss');
+      other.classList.add('hit');
+      setFb(fbText, 'err');
+      setTimeout(next, 1700);
+    }
+
+    $('sc').textContent = okCount;
+    $('tot').textContent = totCount;
+  }
+
+  function toggleHint() {
+    $('hb').classList.toggle('open');
+    $('chev').classList.toggle('open');
+  }
+
+  loadQ();
+</script>
+</body>
+</html>

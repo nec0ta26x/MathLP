@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Quest | 中学生向け数学ゲーム</title>
+  <meta name="description" content="正負の数・累乗・素因数分解など、中学数学をミニゲームで楽しく学べる無料サイト。会員登録不要で今すぐ遊べます。" />
+  <meta property="og:title" content="Math Quest | 中学生向け数学ゲーム" />
+  <meta property="og:description" content="正負の数・累乗・素因数分解など、中学数学の重要単元をミニゲームで楽しく学習。図形・関数の単元も順次追加予定。" />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Math Quest トップへ">
+      <span class="brand-icon">🎮</span>
+      <span><strong>Math Quest</strong><small>中学数学をゲームで理解する</small></span>
+    </a>
+    <nav class="nav" id="mainNav" aria-label="メインナビゲーション">
+      <a href="#features">特徴</a><a href="#games">ゲーム一覧</a><a href="#units">学べる単元</a><a href="#howto">使い方</a>
+    </nav>
+    <a class="header-cta" href="#games">今すぐプレイ！</a>
+    <button class="nav-toggle" id="navToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="mainNav">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main id="top">
+    <section class="hero section">
+      <div class="hero-copy reveal">
+        <p class="eyebrow">遊んで学べる！中学生のための数学ゲームサイト</p>
+        <h1>ゲームで楽しく、<br>数学が<span>得意</span>になる！</h1>
+        <p class="lead">正負の数・累乗・素因数分解など、中学数学の重要単元をミニゲームで学習。スキマ時間に楽しく遊んで、自然と理解を深めよう。図形・関数などの単元も順次追加予定！</p>
+        <div class="hero-points">
+          <p><b>🎲</b> ミニゲームで楽しく学べる</p>
+          <p><b>📘</b> 中学数学の単元を整理</p>
+          <p><b>📈</b> 自分のペースで復習</p>
+        </div>
+        <a class="primary-btn" href="#games">今すぐ無料でプレイ！<span>›</span></a>
+        <small class="note">※ 会員登録不要・完全無料で遊べます</small>
+      </div>
+
+      <div class="hero-visual reveal" aria-label="数学ゲーム画面のイメージ">
+        <span class="float f1">x²</span><span class="float f2">√</span><span class="float f3">a²+b²=c²</span><span class="float f4">π</span>
+        <div class="game-window">
+          <div class="window-bar"><span></span><span></span><span></span></div>
+          <div class="game-screen">
+            <div class="score"><b>正負の数をマスターしよう！</b><em>スコア 350　ステージ 3/10</em></div>
+            <div class="question">(−2) + 5<br><span>= □</span></div>
+            <div class="answers"><button>−7</button><button>−3</button><button>3</button><button>7</button></div>
+            <div class="character">🙋‍♂️</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section features">
+      <h2>このサイトの特徴</h2>
+      <div class="cards four">
+        <article class="card reveal"><div class="icon blue">🎮</div><h3>楽しいゲームで学べる</h3><p>クイズ・パズル・アクションなど、飽きにくい形式で数学に触れられます。</p></article>
+        <article class="card reveal"><div class="icon pink">📖</div><h3>わかりやすい解説つき</h3><p>間違えた問題も、やさしい解説で理解。苦手をそのままにしません。</p></article>
+        <article class="card reveal"><div class="icon green">📈</div><h3>レベルに合わせて学習</h3><p>基礎から応用まで、段階的にステージアップできる設計です。</p></article>
+        <article class="card reveal"><div class="icon yellow">⏱️</div><h3>スキマ時間にぴったり</h3><p>1回1〜3分で遊べるゲーム中心。短い時間でも学習を進められます。</p></article>
+      </div>
+    </section>
+
+    <section id="games" class="section games">
+      <h2>ゲーム一覧</h2>
+      <div class="tabs" role="tablist" aria-label="単元でしぼり込む">
+        <button class="active" role="tab" aria-selected="true" data-filter="すべて">すべて</button><button role="tab" aria-selected="false" data-filter="数と式">数と式</button><button role="tab" aria-selected="false" data-filter="図形">図形（準備中）</button><button role="tab" aria-selected="false" data-filter="関数">関数（準備中）</button><button role="tab" aria-selected="false" data-filter="データの活用">データの活用（準備中）</button>
+      </div>
+      <div class="cards game-grid" id="gameGrid">
+        <a class="game-card reveal" data-category="数と式" href="games/absolute.html"><div class="thumb sky">📏<strong>|-3|</strong></div><h3>絶対値チャレンジ</h3><p>数直線をイメージしながら絶対値の意味をマスター。</p><span>数と式</span></a>
+        <a class="game-card reveal" data-category="数と式" href="games/powers.html"><div class="thumb aqua">✖️<strong>2³</strong></div><h3>累乗チャレンジ</h3><p>累乗の計算をテンポよく解いてスピードアップ。</p><span>数と式</span></a>
+        <a class="game-card reveal" data-category="数と式" href="games/addition.html"><div class="thumb white">➕<strong>-2+5</strong></div><h3>加減法チャレンジ</h3><p>正負の数の足し算・引き算を反復練習。</p><span>数と式</span></a>
+        <a class="game-card reveal" data-category="数と式" href="games/multiply.html"><div class="thumb graph">✳️<strong>-4×3</strong></div><h3>乗除法チャレンジ</h3><p>正負の数のかけ算・わり算の符号ルールを定着。</p><span>数と式</span></a>
+        <a class="game-card reveal" data-category="数と式" href="games/order.html"><div class="thumb chart">🔢<strong>3+2×4</strong></div><h3>計算順序チャレンジ</h3><p>四則混合の計算順序を正しく身につけよう。</p><span>数と式</span></a>
+        <a class="game-card reveal" data-category="数と式" href="games/factorize.html"><div class="thumb sky">🧩<strong>12=?</strong></div><h3>素因数分解チャレンジ</h3><p>数を素数の積に分解するトレーニング。</p><span>数と式</span></a>
+        <a class="game-card reveal" data-category="数と式" href="games/average.html"><div class="thumb aqua">📊<strong>x̄</strong></div><h3>平均チャレンジ</h3><p>仮平均の考え方を使って平均をすばやく求める。</p><span>数と式</span></a>
+      </div>
+      <p class="no-results" id="noResults" hidden>該当するゲームはまだ準備中です。</p>
+      <p class="more">新しいゲームは順次追加予定です！</p>
+    </section>
+
+    <section id="units" class="section units">
+      <h2>学べる単元</h2>
+      <div class="unit-list"><span>正負の数</span><span>文字式</span><span>方程式</span><span>比例・反比例</span><span>一次関数</span><span>平面図形</span><span>空間図形</span><span>確率</span><span>データ活用</span></div>
+    </section>
+
+    <section id="howto" class="section howto">
+      <h2>使い方はかんたん！</h2>
+      <div class="steps">
+        <div class="step reveal"><b>1</b><h3>好きなゲームを選ぶ</h3><p>学びたい単元や、やってみたいゲームを選ぼう。</p></div>
+        <div class="arrow">→</div>
+        <div class="step reveal"><b>2</b><h3>ゲームで楽しく学ぶ</h3><p>遊びながら、自然と数学の考え方が身につきます。</p></div>
+        <div class="arrow">→</div>
+        <div class="step reveal"><b>3</b><h3>くり返して力をつける</h3><p>何度も挑戦して、苦手を得意に変えよう。</p></div>
+      </div>
+    </section>
+
+    <section id="cta" class="cta reveal">
+      <h2>さあ、今すぐゲームで数学を楽しもう！</h2>
+      <p>完全無料・今すぐプレイできます</p>
+      <a class="white-btn" href="#games">今すぐ無料でプレイ！<span>›</span></a>
+    </section>
+  </main>
+
+  <footer>© 2026 Math Quest - 中学数学を楽しく学ぼう！</footer>
+  <script src="js/script.js"></script>
+</body>
+</html>
